@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: swiftpay
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: swiftpay-config
+  namespace: swiftpay
+data:
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  SPRING_DATA_REDIS_HOST: redis
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/swiftpay
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiftpay
+  namespace: swiftpay
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: swiftpay }
+  template:
+    metadata:
+      labels: { app: swiftpay }
+    spec:
+      containers:
+        - name: api
+          image: swiftpay-ledger:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom: [{ configMapRef: { name: swiftpay-config } }]
+          env:
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom: { secretKeyRef: { name: swiftpay-secrets, key: username } }
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom: { secretKeyRef: { name: swiftpay-secrets, key: password } }
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: 8080 }
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: 8080 }
+          resources:
+            requests: { cpu: 250m, memory: 512Mi }
+            limits: { cpu: 1, memory: 1Gi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swiftpay
+  namespace: swiftpay
+spec:
+  selector: { app: swiftpay }
+  ports: [{ port: 80, targetPort: 8080 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: swiftpay
+  namespace: swiftpay
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: swiftpay }
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }

@@ -1,0 +1,8 @@
+/target/
+.venv/
+.idea/
+*.iml
+.env
+artifacts/*.etl
+*.log
+*.class

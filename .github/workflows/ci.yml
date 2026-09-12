@@ -1,0 +1,27 @@
+name: SwiftPay CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn -B verify
+      - run: docker compose config
+      - run: docker build --tag swiftpay-ledger:${{ github.sha }} .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            load-test-result.log
+          if-no-files-found: ignore
