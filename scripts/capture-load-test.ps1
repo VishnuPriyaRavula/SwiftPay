@@ -16,8 +16,10 @@ $etl = [IO.Path]::ChangeExtension($Output, '.etl')
 & 'C:\Windows\System32\pktmon.exe' filter add -p 8080 | Out-Null
 & 'C:\Windows\System32\pktmon.exe' start --capture --pkt-size 0 --file-name $etl --file-size 4096 | Out-Null
 try {
-    $java = (Get-Command java.exe -ErrorAction Stop).Source
-    $javac = (Get-Command javac.exe -ErrorAction Stop).Source
+    $jdkHome = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { 'C:\Program Files\Eclipse Adoptium\jdk-21.0.3.9-hotspot' }
+    $java = Join-Path $jdkHome 'bin\java.exe'
+    $javac = Join-Path $jdkHome 'bin\javac.exe'
+    if (-not (Test-Path $java) -or -not (Test-Path $javac)) { throw "Java 21 JDK not found at $jdkHome" }
     & $javac "$PSScriptRoot\LoadTest.java"
     if ($LASTEXITCODE -ne 0) { throw 'LoadTest.java compilation failed.' }
     & $java -cp $PSScriptRoot LoadTest 'http://localhost:8080' $Requests $TargetTps $Concurrency
