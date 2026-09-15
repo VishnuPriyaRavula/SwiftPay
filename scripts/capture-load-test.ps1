@@ -1,7 +1,8 @@
 param(
     [string]$Output = 'artifacts/swiftpay-load.pcapng',
     [int]$Requests = 1000000,
-    [int]$TargetTps = 250
+    [int]$TargetTps = 250,
+    [int]$Concurrency = 64
 )
 
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
@@ -15,7 +16,12 @@ $etl = [IO.Path]::ChangeExtension($Output, '.etl')
 & 'C:\Windows\System32\pktmon.exe' filter add -p 8080 | Out-Null
 & 'C:\Windows\System32\pktmon.exe' start --etw | Out-Null
 try {
-    & "$PSScriptRoot\load-test.ps1" -Requests $Requests -TargetTps $TargetTps
+    $java = (Get-Command java.exe -ErrorAction Stop).Source
+    $javac = (Get-Command javac.exe -ErrorAction Stop).Source
+    & $javac "$PSScriptRoot\LoadTest.java"
+    if ($LASTEXITCODE -ne 0) { throw 'LoadTest.java compilation failed.' }
+    & $java -cp $PSScriptRoot LoadTest 'http://localhost:8080' $Requests $TargetTps $Concurrency
+    if ($LASTEXITCODE -ne 0) { throw 'Java load test failed.' }
 } finally {
     & 'C:\Windows\System32\pktmon.exe' stop | Out-Null
     & 'C:\Windows\System32\pktmon.exe' etl2pcap $etl -o $Output | Out-Null
