@@ -14,7 +14,7 @@ New-Item -ItemType Directory -Force (Split-Path $Output) | Out-Null
 $etl = [IO.Path]::ChangeExtension($Output, '.etl')
 & 'C:\Windows\System32\pktmon.exe' filter remove | Out-Null
 & 'C:\Windows\System32\pktmon.exe' filter add -p 8080 | Out-Null
-& 'C:\Windows\System32\pktmon.exe' start --etw | Out-Null
+& 'C:\Windows\System32\pktmon.exe' start --capture --pkt-size 0 --file-name $etl --file-size 4096 | Out-Null
 try {
     $java = (Get-Command java.exe -ErrorAction Stop).Source
     $javac = (Get-Command javac.exe -ErrorAction Stop).Source
