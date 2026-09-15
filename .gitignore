@@ -4,5 +4,6 @@
 *.iml
 .env
 artifacts/*.etl
+artifacts/*.pcapng
 *.log
 *.class

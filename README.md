@@ -2,6 +2,8 @@
 
 SwiftPay is an event-driven P2P payment ledger implemented with Java 21 and Spring Boot. The gateway accepts an idempotent request, persists it as `PENDING`, and emits `PaymentInitiated`. The ledger consumer locks both accounts, applies a debit/credit atomically, and emits `PaymentCompleted` or `PaymentFailed`.
 
+The AI-native engineering workflow is documented in [AI_PLAYBOOK.md](AI_PLAYBOOK.md), with reusable planning, review, incident, and test-generation prompts under [prompts](prompts).
+
 ## Run locally
 
 Prerequisites: Java 21 and Docker Compose.
@@ -36,7 +38,7 @@ The API is available at `http://localhost:8080`. Swagger UI is at `/swagger-ui.h
 
 ## Test evidence
 
-The completed performance run used `scripts/LoadTest.java` and produced 1,000,000 successful requests at 250 TPS. Run the capture wrapper from Administrator PowerShell to produce `artifacts/swiftpay-load.pcapng`; the file must be non-empty before submission.
+The completed performance run used `scripts/LoadTest.java` and produced 1,000,000 successful requests at 250 TPS. Run the capture wrapper from Administrator PowerShell to produce `artifacts/swiftpay-load.pcapng`; the script validates that the trace contains `POST /v1/payments` before accepting it.
 
 ## Demo account setup
 

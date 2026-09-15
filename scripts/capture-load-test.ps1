@@ -24,4 +24,9 @@ try {
 if (-not (Test-Path $Output) -or (Get-Item $Output).Length -eq 0) {
     throw "PCAP conversion failed or produced an empty file: $Output"
 }
+$captureBytes = [IO.File]::ReadAllBytes($Output)
+$captureText = [Text.Encoding]::ASCII.GetString($captureBytes)
+if ($captureText.IndexOf('POST /v1/payments') -lt 0) {
+    throw "PCAP does not contain SwiftPay payment request traffic: $Output"
+}
 Write-Host "PCAP written to $Output"
