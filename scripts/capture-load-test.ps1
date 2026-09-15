@@ -10,7 +10,8 @@ New-Item -ItemType Directory -Force (Split-Path $Output) | Out-Null
 $outputPath = (Resolve-Path (Split-Path $Output)).Path
 $pcap = [IO.Path]::ChangeExtension($Output, '.pcap')
 $pcapName = Split-Path $pcap -Leaf
-$appContainer = (& docker compose ps -q app).Trim()
+$composeFile = Join-Path $PSScriptRoot '..\docker-compose.yml'
+$appContainer = (& docker compose -f $composeFile ps -q app).Trim()
 if (-not $appContainer) { throw 'The app container is not running. Start it with docker compose up -d --build.' }
 $captureName = 'swiftpay-http-capture'
 & docker rm -f $captureName 2>$null | Out-Null
